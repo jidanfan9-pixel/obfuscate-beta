@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101411">
+  <meta name="description" content="Luau Guard — 面向 Roblox 开发者的 Luau 代码混淆工作台。">
+  <title>Luau Guard — 代码混淆工作台</title>
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./styles.css">
+  <script src="./api-config.js"></script>
+  <script src="./app.js" defer></script>
+</head>
+<body>
+  <div class="shell">
+    <header class="topbar">
+      <a class="brand" href="./" aria-label="Luau Guard 首页">
+        <span class="brand-mark" aria-hidden="true">L<span>&gt;</span></span>
+        <span class="brand-name"><strong>LUAU</strong><small>GUARD / 01</small></span>
+      </a>
+      <div class="top-meta"><span class="live-dot" id="serviceDot"></span><span id="serviceStatus">正在连接 API</span><span class="version-tag">WEB TOOL</span></div>
+    </header>
+
+    <main>
+      <section class="intro">
+        <div class="intro-copy">
+          <p class="eyebrow"><span>01</span> / SOURCE PROTECTION</p>
+          <h1>把实现收起来，<em>逻辑留在原位。</em></h1>
+          <p class="intro-sub">Luau 代码混淆工作台。粘贴源码，选择强度，取回处理结果。</p>
+        </div>
+        <div class="privacy-note"><span class="privacy-icon" aria-hidden="true">↗</span><span><b>仅即时处理</b><small>代码不会保存，也不会执行</small></span></div>
+      </section>
+
+      <section class="controls" aria-label="混淆设置">
+        <label class="level-label" for="level">处理等级</label>
+        <select id="level" aria-label="选择混淆等级">
+          <option value="compact">轻量压缩 <span>— 清理注释与空白</span></option>
+          <option value="standard" selected>标准混淆 — 重命名局部变量</option>
+          <option value="strong">强化混淆 — 重命名变量与参数</option>
+        </select>
+        <span class="control-spacer"></span>
+        <span class="limit-note">最大输入 256 KiB</span>
+        <button class="run-button" id="runButton" type="button"><span class="run-symbol">▶</span><span id="runLabel">开始混淆</span><kbd>⌘ ↵</kbd></button>
+      </section>
+
+      <section class="workspace" aria-label="代码工作区">
+        <article class="editor-panel source-panel">
+          <div class="panel-head">
+            <div class="panel-title"><span class="file-icon source-icon">{ }</span><div><h2>源代码</h2><span class="file-name">script.luau</span></div></div>
+            <div class="panel-tools"><span id="sourceBytes">0 B</span><button id="clearButton" class="icon-button" type="button" aria-label="清空源码" title="清空源码">清空</button></div>
+          </div>
+          <div class="code-wrap"><div class="line-rail" id="sourceLines" aria-hidden="true">1</div><textarea id="sourceCode" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" aria-label="Luau 源代码" placeholder="-- 在这里粘贴 Luau 源码…"></textarea></div>
+          <div class="panel-foot"><span>LUＡＵ / INPUT</span><span id="inputHint">就绪，等待源码</span></div>
+        </article>
+
+        <div class="flow-divider" aria-hidden="true"><span>›</span></div>
+
+        <article class="editor-panel output-panel">
+          <div class="panel-head">
+            <div class="panel-title"><span class="file-icon output-icon">≋</span><div><h2>混淆结果</h2><span class="file-name">script.obfuscated.luau</span></div></div>
+            <div class="panel-tools"><span id="outputBytes">—</span><button id="copyButton" class="icon-button" type="button" disabled>复制</button><button id="downloadButton" class="icon-button" type="button" disabled>下载</button></div>
+          </div>
+          <div class="code-wrap result-wrap"><div class="line-rail output-rail" id="outputLines" aria-hidden="true">·</div><textarea id="outputCode" spellcheck="false" readonly aria-label="混淆结果" placeholder="处理后的代码会显示在这里"></textarea><div class="empty-state" id="emptyState"><span class="empty-glyph">L<span>&gt;</span></span><b>等待处理</b><small>输出将保留在此页面，不会写入服务器存储</small></div></div>
+          <div class="panel-foot"><span>LUＡＵ / OUTPUT</span><span id="outputHint">尚无结果</span></div>
+        </article>
+      </section>
+
+      <section class="result-strip" aria-live="polite">
+        <div class="result-message"><span class="result-dot" id="resultDot"></span><span id="resultMessage">就绪 — 代码仅在本次请求期间处理</span></div>
+        <div class="stats"><span>输入 <b id="statIn">—</b></span><span>输出 <b id="statOut">—</b></span><span>体积变化 <b id="statSaved">—</b></span><span>重命名 <b id="statRenamed">—</b></span></div>
+      </section>
+    </main>
+
+    <footer class="footer"><span>LUАU GUARD <span class="footer-sep">/</span> BUILT FOR DEVELOPERS</span><span>不运行源码 · 不保存源码 · 仅做词法转换</span></footer>
+  </div>
+</body>
+</html>

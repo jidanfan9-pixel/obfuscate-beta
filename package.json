@@ -1,0 +1,14 @@
+{
+  "name": "luau-guard",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.12.1",
+  "scripts": {
+    "start": "node backend/server.mjs",
+    "test": "node --test backend/test/*.test.mjs"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
