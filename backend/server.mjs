@@ -62,7 +62,7 @@ async function readJson(request) {
   try { return JSON.parse(Buffer.concat(chunks).toString('utf8')); }
   catch { throw Object.assign(new Error('请求内容必须是有效 JSON'), { status: 400 }); }
 }
-const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.svg': 'image/svg+xml', '.json': 'application/json; charset=utf-8' };
+const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.svg': 'image/svg+xml', '.json': 'application/json; charset=utf-8', '.yaml': 'application/yaml; charset=utf-8' };
 
 const server = createServer(async (request, response) => {
   const corsError = applyCors(request, response);
@@ -101,10 +101,11 @@ const server = createServer(async (request, response) => {
       return sendJson(response, 500, { error: '页面路由清单暂不可用' });
     }
   }
+  const isOpenApi = url.pathname === '/openapi.yaml';
   const requested = url.pathname === '/' ? 'index.html' : url.pathname.slice(1);
-  if (!['index.html', 'app.js', 'styles.css', 'api-config.js', 'favicon.svg'].includes(requested)) return sendJson(response, 404, { error: '页面不存在' });
+  if (!isOpenApi && !['index.html', 'app.js', 'styles.css', 'api-config.js', 'favicon.svg', 'api-docs.html'].includes(requested)) return sendJson(response, 404, { error: '页面不存在' });
   try {
-    const body = await readFile(resolve(ROOT, requested));
+    const body = await readFile(isOpenApi ? resolve(ROOT, '../docs/openapi.yaml') : resolve(ROOT, requested));
     response.writeHead(200, { 'Content-Type': MIME[extname(requested)] || 'application/octet-stream', 'Cache-Control': requested.endsWith('.html') || requested === 'api-config.js' ? 'no-cache' : 'public, max-age=3600', 'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'strict-origin-when-cross-origin' });
     return response.end(request.method === 'HEAD' ? undefined : body);
   } catch {

@@ -1,0 +1,192 @@
+openapi: 3.1.0
+info:
+  title: Luau Guard API
+  version: 1.0.0
+  description: >-
+    Luau 源码词法混淆 API。线上请将服务器替换为后端发布结果中的 HTTPS API 主机名。
+servers:
+  - url: http://localhost:3000
+    description: 本地开发服务
+  - url: https://{host}
+    description: 已部署的后端；将 host 替换为发布结果中的主机名
+    variables:
+      host:
+        default: example.invalid
+        description: 后端主机名，不包含协议或路径
+paths:
+  /api/health:
+    get:
+      operationId: healthCheck
+      summary: 检查 API 健康状态
+      description: 无认证的发布平台探活端点。
+      responses:
+        '200':
+          description: 服务健康
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+              example:
+                ok: true
+                service: luau-guard-api
+                version: 1.0.0
+    head:
+      operationId: healthCheckHead
+      summary: 以 HEAD 检查 API 健康状态
+      responses:
+        '200':
+          description: 服务健康；响应体为空
+  /api/obfuscate:
+    post:
+      operationId: obfuscateSource
+      summary: 混淆 Luau 源码
+      description: >-
+        不执行或持久化源码。source UTF-8 大小上限为 256 KiB。每个服务进程按来源 IP
+        每分钟最多接受 30 个混淆请求。浏览器来源须通过服务端 CORS allowlist。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ObfuscateRequest'
+            examples:
+              standard:
+                summary: 标准局部变量重命名
+                value:
+                  source: "local count = 3\nprint(count)"
+                  level: standard
+              compact:
+                summary: 只压缩注释和空白
+                value:
+                  source: "print(1)"
+                  level: compact
+      responses:
+        '200':
+          description: 混淆完成
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ObfuscateResponse'
+              example:
+                code: "local __l0=3\nprint(__l0)"
+                stats:
+                  inputBytes: 28
+                  outputBytes: 24
+                  savedPercent: 14
+                  identifiersRenamed: 1
+                  tokens: 8
+        '400':
+          description: 无效 JSON、缺少 source 字符串或源码为空
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: 浏览器来源不在 CORS allowlist 中
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: API 路由不存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '405':
+          description: 方法错误；仅允许 POST
+          headers:
+            Allow:
+              schema:
+                type: string
+              example: POST, OPTIONS
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '413':
+          description: 请求体或源码超过字节上限
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: 混淆级别无效或字符串词法错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: 超过来源 IP 的进程内速率限制；请等待 Retry-After 秒数
+          headers:
+            Retry-After:
+              schema:
+                type: string
+              example: '60'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+components:
+  schemas:
+    HealthResponse:
+      type: object
+      required: [ok, service, version]
+      properties:
+        ok:
+          type: boolean
+          const: true
+        service:
+          type: string
+          const: luau-guard-api
+        version:
+          type: string
+          example: 1.0.0
+    ObfuscateRequest:
+      type: object
+      additionalProperties: false
+      required: [source]
+      properties:
+        source:
+          type: string
+          minLength: 1
+          description: Luau 源码；UTF-8 编码后最大 262144 字节。
+        level:
+          type: string
+          enum: [compact, standard, strong]
+          default: standard
+          description: 混淆等级。
+    ObfuscateResponse:
+      type: object
+      required: [code, stats]
+      properties:
+        code:
+          type: string
+          description: 词法压缩或局部标识符重命名后的 Luau 源码。
+        stats:
+          $ref: '#/components/schemas/ObfuscationStats'
+    ObfuscationStats:
+      type: object
+      required: [inputBytes, outputBytes, savedPercent, identifiersRenamed, tokens]
+      properties:
+        inputBytes:
+          type: integer
+          minimum: 0
+        outputBytes:
+          type: integer
+          minimum: 0
+        savedPercent:
+          type: integer
+          description: 输入相对输出的字节变化百分比，可能为负数。
+        identifiersRenamed:
+          type: integer
+          minimum: 0
+        tokens:
+          type: integer
+          minimum: 0
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string

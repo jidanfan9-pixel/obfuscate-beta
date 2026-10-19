@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101411">
+  <meta name="description" content="Luau Guard HTTP API 使用说明与 OpenAPI 规范。">
+  <title>API 文档 — Luau Guard</title>
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./styles.css">
+  <script src="./api-config.js"></script>
+  <style>
+    .docs-main{max-width:1080px;margin:56px auto 40px;padding:0 28px}.docs-main h1{font-size:clamp(2.2rem,5vw,4rem);letter-spacing:-.055em;margin:12px 0}.docs-main h1 em{color:#b6f36b;font-style:normal}.docs-lead{color:#a6b0a5;max-width:760px;line-height:1.7}.docs-nav{display:flex;gap:12px;flex-wrap:wrap;margin:24px 0}.docs-nav a{color:#b6f36b}.docs-panel{border:1px solid #303a30;background:#151b16;border-radius:12px;padding:24px;margin:18px 0}.docs-panel h2{font-size:1.3rem;margin:0 0 14px}.docs-panel h3{font-size:1rem;margin:22px 0 8px;color:#dfe8dc}.docs-panel p,.docs-panel li{color:#aeb9ad;line-height:1.7}.docs-panel code,.docs-panel pre{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}.docs-panel code{color:#d4f2b4}.docs-panel pre{overflow:auto;background:#0d110e;border:1px solid #283128;border-radius:8px;padding:16px;color:#d4f2b4;line-height:1.6}.docs-panel table{width:100%;border-collapse:collapse;text-align:left}.docs-panel th,.docs-panel td{border-bottom:1px solid #303a30;padding:10px 8px;vertical-align:top}.docs-panel th{color:#e7eee4}.docs-panel td{color:#abb7aa;line-height:1.55}.docs-callout{border-left:3px solid #b6f36b;padding:8px 14px;background:#1b241b;color:#c4d0c0}.docs-endpoint{font-family:ui-monospace,monospace;color:#b6f36b}.docs-footer{display:flex;justify-content:space-between;gap:18px;flex-wrap:wrap;padding:20px 28px;border-top:1px solid #283128;color:#879286;font-size:.82rem}.docs-footer a{color:#b6f36b}@media(max-width:650px){.docs-main{padding:0 16px;margin-top:32px}.docs-panel{padding:17px}.docs-panel table{font-size:.88rem}}
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header class="topbar">
+      <a class="brand" href="./" aria-label="Luau Guard 首页"><span class="brand-mark" aria-hidden="true">L<span>&gt;</span></span><span class="brand-name"><strong>LUAU</strong><small>GUARD / API</small></span></a>
+      <a class="icon-button" href="./">返回混淆器</a>
+    </header>
+    <main class="docs-main">
+      <p class="eyebrow"><span>02</span> / API REFERENCE</p>
+      <h1>接口文档，<em>清楚直接。</em></h1>
+      <p class="docs-lead">面向脚本和集成调用者的 Luau Guard HTTP API 参考。服务不需要 API key；请求仅在内存中处理，不执行或持久化源码。</p>
+      <nav class="docs-nav" aria-label="文档链接"><a href="#health">健康检查</a><a href="#obfuscate">混淆接口</a><a href="#errors">错误与限流</a><a href="./openapi.yaml" download>下载 OpenAPI 3.1 YAML</a></nav>
+      <section class="docs-panel">
+        <h2>基址与协议</h2>
+        <p>当前 API 基址：<code id="apiBase">读取配置中…</code></p>
+        <p>部署地址取自独立后端发布结果。浏览器构建通过 GitHub Actions variable <code>LUAUGUARD_API_URL</code> 配置。</p>
+        <p class="docs-callout">GitHub Pages 仅托管静态前端；API 需要独立运行的 Node.js 后端。若显示“尚未配置”，表示前端还没有连接已发布的 API 地址。</p>
+        <p>请求/响应：UTF-8 JSON。无需 Authorization、Cookie 或其他凭据。源码限制为 256 KiB。</p>
+      </section>
+      <section class="docs-panel" id="health">
+        <h2>健康检查</h2>
+        <p><span class="docs-endpoint">GET /api/health</span>（也支持 HEAD），无需认证。</p>
+        <pre>curl "$API_BASE_URL/api/health"</pre>
+        <p>成功：<code>{"ok":true,"service":"luau-guard-api","version":"1.0.0"}</code></p>
+      </section>
+      <section class="docs-panel" id="obfuscate">
+        <h2>混淆源码</h2>
+        <p><span class="docs-endpoint">POST /api/obfuscate</span>，请求头 <code>Content-Type: application/json</code>。</p>
+        <pre>curl -X POST "$API_BASE_URL/api/obfuscate" \
+  -H 'Content-Type: application/json' \
+  -d '{"source":"local count = 3\nprint(count)","level":"strong"}'</pre>
+        <h3>请求字段</h3>
+        <table><thead><tr><th>字段</th><th>类型</th><th>要求与含义</th></tr></thead><tbody>
+          <tr><td><code>source</code></td><td>string</td><td>必需、非空；UTF-8 最大 256 KiB。</td></tr>
+          <tr><td><code>level</code></td><td>string</td><td>可选，默认 <code>standard</code>。可用 <code>compact</code>、<code>standard</code>、<code>strong</code>。</td></tr>
+        </tbody></table>
+        <h3>处理等级</h3>
+        <table><thead><tr><th>值</th><th>行为</th></tr></thead><tbody>
+          <tr><td><code>compact</code></td><td>去注释、压缩空白；尽量保留字符串内容与必要换行。</td></tr>
+          <tr><td><code>standard</code></td><td>在压缩基础上尝试重命名可识别的局部变量。</td></tr>
+          <tr><td><code>strong</code></td><td>也尝试重命名函数参数与循环变量；模板插值中的标识符保持原名。</td></tr>
+        </tbody></table>
+        <h3>成功响应</h3>
+        <pre>{
+  "code": "local __l0=3\nprint(__l0)",
+  "stats": {
+    "inputBytes": 28,
+    "outputBytes": 24,
+    "savedPercent": 14,
+    "identifiersRenamed": 1,
+    "tokens": 8
+  }
+}</pre>
+        <p><code>savedPercent</code> 反映字节数变化，标识符重命名可能使结果变长，因此可以是负值。</p>
+      </section>
+      <section class="docs-panel" id="errors">
+        <h2>错误、CORS 与限流</h2>
+        <table><thead><tr><th>状态</th><th>含义</th></tr></thead><tbody>
+          <tr><td><code>400</code></td><td>JSON 无效、缺少 source 或源码为空。</td></tr>
+          <tr><td><code>403</code></td><td>浏览器 Origin 不在 CORS allowlist。</td></tr>
+          <tr><td><code>404</code> / <code>405</code></td><td>路由不存在或请求方法不支持。</td></tr>
+          <tr><td><code>413</code></td><td>请求体或源码超过大小上限。</td></tr>
+          <tr><td><code>422</code></td><td>混淆等级无效或遇到未闭合字符串。</td></tr>
+          <tr><td><code>429</code></td><td>单进程、单来源 IP 每分钟超过 30 次；响应含 <code>Retry-After: 60</code>。</td></tr>
+        </tbody></table>
+        <p>错误体形如 <code>{"error":"错误说明"}</code>。跨域预检 <code>OPTIONS</code> 返回 204；默认允许站点为 <code>https://jidanfan9-pixel.github.io</code>，可通过服务端 <code>ALLOWED_ORIGINS</code> 扩展。</p>
+        <p class="docs-callout">这是词法转换器，不是完整 Luau 编译器或加密器。复杂语法请在目标 Luau 环境验证输出；工具不承诺抗反编译。</p>
+      </section>
+    </main>
+    <footer class="docs-footer"><span>LUAU GUARD / API REFERENCE</span><span><a href="https://github.com/jidanfan9-pixel/obfuscate-beta/blob/main/docs/API.md">源码 API 文档</a> · <a href="https://github.com/jidanfan9-pixel/obfuscate-beta/blob/main/docs/openapi.yaml">OpenAPI 源文件</a></span></footer>
+  </div>
+  <script>
+    const configuredApiBase = window.LUAUGUARD_CONFIG?.apiBaseUrl?.replace(/\/+$/, '') || '';
+    const sameOriginFallback = location.hostname.endsWith('.github.io') ? '' : location.origin;
+    document.getElementById('apiBase').textContent = configuredApiBase || sameOriginFallback || '尚未配置线上后端 URL';
+  </script>
+</body>
+</html>

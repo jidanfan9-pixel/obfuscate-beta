@@ -36,7 +36,14 @@ test('HTTP API exposes health and safely processes source without storing it', a
 
   const manifestResponse = await fetch(`http://127.0.0.1:${port}/manus-routes.json`);
   assert.equal(manifestResponse.status, 200);
-  assert.deepEqual(await manifestResponse.json(), { routes: [{ path: '/', title: 'Luau Guard API' }] });
+  assert.deepEqual(await manifestResponse.json(), { routes: [{ path: '/', title: 'Luau Guard' }, { path: '/api-docs.html', title: 'API 文档' }] });
+
+  const docs = await fetch(`http://127.0.0.1:${port}/api-docs.html`);
+  assert.equal(docs.status, 200);
+  assert.match(await docs.text(), /API REFERENCE/);
+  const openApi = await fetch(`http://127.0.0.1:${port}/openapi.yaml`);
+  assert.equal(openApi.status, 200);
+  assert.match(await openApi.text(), /openapi: 3\.1\.0/);
 
   const response = await fetch(`http://127.0.0.1:${port}/api/obfuscate`, {
     method: 'POST', headers: { 'content-type': 'application/json', origin },

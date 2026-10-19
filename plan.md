@@ -7,13 +7,16 @@
 - 中文响应式页面：代码输入、混淆等级选择、调用 API、输出预览、复制和下载 `.luau`。
 - 后端提供健康检查和 `POST /api/obfuscate`，限制输入大小、做 CORS 校验与轻量速率限制。
 - Luau 词法扫描支持注释、长字符串、转义字符串、反引号字符串、数字和多字符运算符；输出做安全空白压缩。较强级别对可识别的局部变量、函数参数和循环变量执行保守重命名，不运行脚本、不声称等同于 Luau 编译器。
-- GitHub Actions 把前端文件发布到 Pages，并将仓库变量注入 API 基址。后端容器独立发布，健康路由为 `/api/health`。
+- 提供面向开发者的中文 API 参考 `docs/API.md`、OpenAPI 3.1 文件 `docs/openapi.yaml`，并在 `/api-docs.html` 提供网站内文档页。
+- GitHub Actions 把前端文件与 OpenAPI 文件发布到 Pages，并将仓库变量注入 API 基址。后端容器独立发布，健康路由为 `/api/health`。
 
 ## 技术与结构
 - `frontend/`：纯 HTML/CSS/JavaScript 静态应用，GitHub Pages artifact。
+- `frontend/api-docs.html`：在线 API 说明页；链接机器可读规范。
 - `backend/server.mjs`：Node 原生 HTTP、CORS、限流、输入校验、静态预览与 API。
 - `backend/obfuscator.mjs`：Luau tokenizer、紧凑输出和局部符号混淆。
 - `backend/test/`：Node 内置测试。
+- `docs/API.md`、`docs/openapi.yaml`：协议说明与 OpenAPI 3.1 contract。
 - `Dockerfile`、`package.json`、`pnpm-lock.yaml`：容器入口与可复现的依赖声明（不引入运行时第三方依赖）。
 - `.github/workflows/pages.yml`：GitHub Pages 自动部署。
 - `public/manus-routes.json`：WebDev Preview 的页面路由清单。

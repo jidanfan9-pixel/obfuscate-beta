@@ -31,6 +31,7 @@ jobs:
         run: |
           mkdir -p _site
           cp -R frontend/. _site/
+          cp docs/openapi.yaml _site/openapi.yaml
           node <<'NODE'
           const fs = require('node:fs');
           const url = process.env.API_BASE_URL || '';
